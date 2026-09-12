@@ -144,13 +144,14 @@ class OllamaProvider(BaseLLMProvider):
             "stream": False,
             "options": {
                 "temperature": temperature,
-                "num_predict": max_tokens or 450
+                "num_predict": min(max_tokens or 220, 220),
+                "num_ctx": 2048
             }
         }
 
         try:
             logger.info(f"Dispatching generation to Ollama ({self.model}) at {self.base_url}")
-            with httpx.Client(timeout=120.0) as client:
+            with httpx.Client(timeout=180.0) as client:
                 resp = client.post(f"{self.base_url}/api/chat", json=payload)
                 if resp.status_code == 200:
                     data = resp.json()
@@ -173,10 +174,10 @@ class OllamaProvider(BaseLLMProvider):
                 detail=f"Ollama service is not reachable at {self.base_url}. Please ensure Ollama is installed and running (`ollama serve`)."
             )
         except httpx.TimeoutException:
-            logger.error("Ollama inference timed out after 120s")
+            logger.error("Ollama inference timed out after 180s")
             raise HTTPException(
                 status_code=504,
-                detail=f"Ollama inference timed out while running model '{self.model}'. Consider using a lighter model (e.g., llama3.2:1b or mistral)."
+                detail=f"Ollama inference timed out while running model '{self.model}'. Consider using OpenRouter or a lighter model."
             )
         except HTTPException:
             raise

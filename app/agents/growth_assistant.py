@@ -30,21 +30,26 @@ class GrowthAssistantAgent:
         # 1. Validate session
         session = db.query(ChatSession).filter(ChatSession.id == request.session_id).first()
         if not session:
-            # Auto-create session if not present
-            SessionService.create_session(db)
+            new_s = SessionService.create_session(db)
+            request.session_id = new_s.id
+            session = db.query(ChatSession).filter(ChatSession.id == request.session_id).first()
 
-        # 2. Retrieve relevant transcript chunks
+        # 2. Choose provider and model
+        chosen_provider = request.provider or (session.provider if session else settings.llm_provider)
+        chosen_model = request.model or (session.model if session else None)
+        llm = get_llm_provider(chosen_provider, chosen_model)
+
+        is_ollama = (chosen_provider == "ollama")
+        rag_k = 2 if is_ollama else settings.rag_top_k
+        max_gen_tokens = 220 if is_ollama else 500
+
+        # 3. Retrieve relevant transcript chunks
         sources: List[SourceCitation] = retrieve_relevant_chunks(
             db=db,
             query=request.message,
-            top_k=settings.rag_top_k,
+            top_k=rag_k,
             threshold=settings.rag_score_threshold
         )
-
-        # 3. Choose provider and model
-        chosen_provider = request.provider or session.provider if session else settings.llm_provider
-        chosen_model = request.model or session.model if session else None
-        llm = get_llm_provider(chosen_provider, chosen_model)
 
         # 4. Handle empty retrieval
         if not sources:
@@ -72,7 +77,7 @@ class GrowthAssistantAgent:
         # Fetch recent session history for conversational continuity
         session_detail = SessionService.get_session(db, request.session_id)
         history_msgs = []
-        for msg in session_detail.messages[-6:]:  # Last 6 messages for context window efficiency
+        for msg in session_detail.messages[-4:]:  # Last 4 messages for context window efficiency
             history_msgs.append({"role": msg.role, "content": msg.content})
 
         history_summary = "\n".join([f"{m['role'].capitalize()}: {m['content']}" for m in history_msgs]) or "None (New chat)"
@@ -88,7 +93,7 @@ class GrowthAssistantAgent:
             prompt=formatted_user_prompt,
             system_prompt=GROUNDED_SYSTEM_PROMPT,
             temperature=0.3,  # Low temperature for strict factual adherence
-            max_tokens=500
+            max_tokens=max_gen_tokens
         )
 
         latency_ms = round((time.time() - start_time) * 1000, 2)
