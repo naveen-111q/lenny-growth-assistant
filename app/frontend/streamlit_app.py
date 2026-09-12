@@ -1,4 +1,5 @@
 import os
+import re
 import time
 import requests
 import streamlit as st
@@ -530,6 +531,7 @@ with st.sidebar:
         )
         if selected_sid != st.session_state.session_id:
             st.session_state.session_id = selected_sid
+            st.session_state.current_artifact = st.session_state.get(f"artifact_{selected_sid}")
             st.rerun()
 
     st.caption(f"Session ID: `{st.session_state.session_id[:8]}...`" if st.session_state.session_id else "No session")
@@ -595,12 +597,14 @@ with st.sidebar:
                         provider=active_provider_key,
                         model=selected_model
                     )
-                    st.session_state.current_artifact = {
+                    art_obj = {
                         "type": "markdown",
                         "title": res["title"],
                         "content": res["essay"],
                         "sources": res.get("sources", [])
                     }
+                    st.session_state.current_artifact = art_obj
+                    st.session_state[f"artifact_{st.session_state.session_id}"] = art_obj
                     st.success(f"Generated essay ({res['word_count']} words)!")
                     st.rerun()
                 except Exception as e:
@@ -623,12 +627,14 @@ with st.sidebar:
                             provider=active_provider_key,
                             model=selected_model
                         )
-                        st.session_state.current_artifact = {
+                        art_obj = {
                             "type": res["artifact_type"],
                             "title": res["title"],
                             "content": res["content"],
                             "sources": res.get("sources", [])
                         }
+                        st.session_state.current_artifact = art_obj
+                        st.session_state[f"artifact_{st.session_state.session_id}"] = art_obj
                         st.success(f"Generated {res['artifact_type'].upper()} artifact!")
                         st.rerun()
                     except Exception as e:
@@ -779,10 +785,46 @@ with tab_artifact:
 
         if view_mode == "Rendered View":
             if art["type"] == "html":
-                # Render inside sandboxed iframe
-                components.html(art["content"], height=650, scrolling=True)
+                # Strip markdown code fences using plain string ops (no re import needed)
+                cleaned_html = art["content"].strip()
+                if cleaned_html.startswith("```html"):
+                    cleaned_html = cleaned_html[7:].lstrip("\n").strip()
+                elif cleaned_html.startswith("```"):
+                    cleaned_html = cleaned_html[3:].lstrip("\n").strip()
+                if cleaned_html.endswith("```"):
+                    cleaned_html = cleaned_html[:-3].rstrip()
+
+                # Ensure unclosed <style> is closed (handles Ollama truncation)
+                if "<style" in cleaned_html.lower() and "</style>" not in cleaned_html.lower():
+                    cleaned_html += "\n</style>\n"
+
+                # Ensure closing tags so browser renders the complete DOM
+                if "<html" in cleaned_html.lower():
+                    if "</body>" not in cleaned_html.lower():
+                        cleaned_html += "\n</body>"
+                    if "</html>" not in cleaned_html.lower():
+                        cleaned_html += "\n</html>"
+                else:
+                    # Wrap bare HTML snippet in a clean light-themed full document
+                    cleaned_html = (
+                        "<!DOCTYPE html>\n<html lang=\"en\">\n<head>\n"
+                        "  <meta charset=\"utf-8\">\n"
+                        "  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\">\n"
+                        "  <style>\n"
+                        "    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;"
+                        " padding: 28px; background: #f8fafc; color: #0f172a; line-height: 1.65; }\n"
+                        "    .artifact-box { background: #ffffff; padding: 32px; border-radius: 14px;"
+                        " border: 1px solid #e2e8f0; box-shadow: 0 4px 20px rgba(0,0,0,0.06);"
+                        " max-width: 900px; margin: 0 auto; }\n"
+                        "  </style>\n</head>\n<body>\n"
+                        f"  <div class=\"artifact-box\">{cleaned_html}</div>\n"
+                        "</body>\n</html>"
+                    )
+
+                # Render inside sandboxed iframe (components.v1.html is the stable API)
+                st.components.v1.html(cleaned_html, height=700, scrolling=True)
             else:
-                # Render Markdown
+                # Render Markdown artifact
                 st.markdown(art["content"])
         else:
             # Code Inspector Mode

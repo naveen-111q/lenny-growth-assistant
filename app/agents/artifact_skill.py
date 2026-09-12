@@ -88,7 +88,8 @@ REQUIREMENTS:
         raw_output = llm.generate(
             prompt=prompt,
             system_prompt=ARTIFACT_SYSTEM_PROMPT,
-            temperature=0.3
+            temperature=0.3,
+            max_tokens=1500
         )
 
         # Extract content from code block if wrapped
@@ -97,15 +98,21 @@ REQUIREMENTS:
         match = re.search(pattern, raw_output, re.IGNORECASE)
         if match:
             extracted = match.group(1).strip()
-        elif extracted.startswith("```") and extracted.endswith("```"):
-            extracted = re.sub(r"^```\w*\n", "", extracted)
-            extracted = re.sub(r"\n```$", "", extracted).strip()
+        else:
+            # Robustly strip leading ```html or ``` even if closing fence was not generated
+            extracted = re.sub(r"^```(?:[a-zA-Z0-9_\-]+)?\s*\n?", "", extracted)
+            extracted = re.sub(r"\n?```\s*$", "", extracted).strip()
 
         # Sanitize if HTML
         if artifact_type == "html":
             extracted = sanitize_html(extracted)
+
+            # Fix any unclosed <style> tag if model generation was truncated
+            if "<style" in extracted.lower() and "</style>" not in extracted.lower():
+                extracted += "\n</style>\n"
+
             if "<html" not in extracted.lower():
-                # Wrap in standard HTML template if partial
+                # Wrap in standard clean HTML template if partial
                 extracted = f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -113,18 +120,10 @@ REQUIREMENTS:
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Lenny Growth Assistant Artifact</title>
     <style>
-        :root {{
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --accent-color: #6366f1;
-            --accent-hover: #4f46e5;
-            --border-color: #334155;
-        }}
         body {{
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            background: var(--bg-color);
-            color: var(--text-color);
+            background: #f8fafc;
+            color: #0f172a;
             margin: 0;
             padding: 24px;
             line-height: 1.6;
@@ -132,11 +131,11 @@ REQUIREMENTS:
         .container {{
             max-width: 900px;
             margin: 0 auto;
-            background: var(--card-bg);
+            background: #ffffff;
             padding: 32px;
             border-radius: 16px;
-            border: 1px solid var(--border-color);
-            box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
         }}
     </style>
 </head>
@@ -146,6 +145,12 @@ REQUIREMENTS:
     </div>
 </body>
 </html>"""
+            else:
+                # Ensure closing tags exist so browser completes DOM rendering
+                if "</body" not in extracted.lower():
+                    extracted += "\n</body>"
+                if "</html" not in extracted.lower():
+                    extracted += "\n</html>"
 
         title = f"{request.prompt[:40]}... ({artifact_type.upper()})"
 

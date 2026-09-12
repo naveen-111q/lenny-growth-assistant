@@ -144,7 +144,7 @@ class OllamaProvider(BaseLLMProvider):
             "stream": False,
             "options": {
                 "temperature": temperature,
-                "num_predict": max_tokens or 280
+                "num_predict": max_tokens or 450
             }
         }
 
@@ -335,12 +335,15 @@ def get_llm_provider(
 ) -> BaseLLMProvider:
     """
     Factory function returning the configured or requested LLM provider.
+    Ensures safe model fallbacks so provider switches don't send mismatched IDs.
     """
     chosen = (provider_name or settings.llm_provider).lower().strip()
     if chosen == "openrouter":
-        return OpenRouterProvider(model=model_name)
+        valid_model = model_name if (model_name and "/" in model_name) else settings.openrouter_model
+        return OpenRouterProvider(model=valid_model)
     elif chosen == "ollama":
-        return OllamaProvider(model=model_name)
+        valid_model = model_name if (model_name and "/" not in model_name) else "llama3.2"
+        return OllamaProvider(model=valid_model)
     else:
         logger.warning(f"Unknown provider '{chosen}'. Falling back to Ollama.")
-        return OllamaProvider(model=model_name)
+        return OllamaProvider(model="llama3.2")
