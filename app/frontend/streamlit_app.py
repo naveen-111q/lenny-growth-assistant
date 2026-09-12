@@ -14,47 +14,60 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom CSS for polished, ChatGPT-like interface
+# Custom CSS for polished, high-contrast light theme with dedicated Query/Response color palettes
 st.markdown("""
 <style>
     /* Global Typography and Palette */
     @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap');
 
-    html, body, [class*="css"] {
+    html, body, [class*="css"], [data-testid="stAppViewContainer"] {
         font-family: 'Plus Jakarta Sans', sans-serif;
+        background-color: #f8fafc !important;
+        color: #0f172a !important;
     }
 
     /* Main Container Padding */
     .main .block-container {
-        padding-top: 1.8rem;
+        padding-top: 1.5rem;
         padding-bottom: 2.5rem;
         max-width: 1050px;
     }
 
-    /* Brand Header */
+    /* Sidebar Styling */
+    [data-testid="stSidebar"] {
+        background-color: #ffffff !important;
+        border-right: 1px solid #e2e8f0 !important;
+    }
+    [data-testid="stSidebar"] .block-container {
+        padding-top: 2rem;
+    }
+
+    /* Brand Header Container */
     .header-container {
         display: flex;
         align-items: center;
         justify-content: space-between;
-        padding: 1rem 1.5rem;
-        background: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
+        padding: 1.1rem 1.6rem;
+        background: linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%);
         border-radius: 14px;
-        border: 1px solid rgba(99, 102, 241, 0.25);
+        border: 1px solid #e2e8f0;
+        border-left: 5px solid #4f46e5;
         margin-bottom: 1.5rem;
-        box-shadow: 0 4px 20px rgba(0, 0, 0, 0.25);
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.05);
     }
     .header-title {
-        font-size: 1.4rem;
+        font-size: 1.45rem;
         font-weight: 700;
-        color: #f8fafc;
+        color: #0f172a;
         display: flex;
         align-items: center;
         gap: 0.6rem;
     }
     .header-subtitle {
-        font-size: 0.85rem;
-        color: #94a3b8;
-        margin-top: 0.2rem;
+        font-size: 0.86rem;
+        color: #64748b;
+        margin-top: 0.25rem;
+        font-weight: 500;
     }
 
     /* Status Badges */
@@ -66,68 +79,251 @@ st.markdown("""
     .status-badge {
         font-size: 0.8rem;
         font-weight: 600;
-        padding: 0.3rem 0.8rem;
+        padding: 0.35rem 0.85rem;
         border-radius: 20px;
         display: inline-flex;
         align-items: center;
         gap: 0.4rem;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.04);
     }
     .status-online {
-        background-color: rgba(16, 185, 129, 0.15);
-        color: #34d399;
-        border: 1px solid rgba(16, 185, 129, 0.3);
+        background-color: #ecfdf5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
     }
     .status-offline {
-        background-color: rgba(239, 68, 68, 0.15);
-        color: #f87171;
-        border: 1px solid rgba(239, 68, 68, 0.3);
+        background-color: #fef2f2;
+        color: #991b1b;
+        border: 1px solid #fecaca;
     }
     .status-neutral {
-        background-color: rgba(99, 102, 241, 0.15);
-        color: #818cf8;
-        border: 1px solid rgba(99, 102, 241, 0.3);
+        background-color: #eef2ff;
+        color: #3730a3;
+        border: 1px solid #c7d2fe;
+    }
+
+    /* =========================================================================
+       USER QUERY VS ASSISTANT RESPONSE DISTINCT THEMES
+       ========================================================================= */
+
+    /* 1. User Message: Soft Indigo / Blue Bubble */
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
+        background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%) !important;
+        border: 1px solid #c7d2fe !important;
+        border-left: 5px solid #4f46e5 !important;
+        border-radius: 14px !important;
+        padding: 1.1rem 1.35rem !important;
+        margin-bottom: 1.25rem !important;
+        box-shadow: 0 2px 10px rgba(79, 70, 229, 0.07) !important;
+    }
+
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stChatMessageContent"] {
+        color: #1e1b4b !important;
+    }
+
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) p {
+        color: #1e1b4b !important;
+        font-weight: 500 !important;
+        font-size: 0.96rem !important;
+        line-height: 1.55 !important;
+    }
+
+    /* 2. Assistant Message: Crisp White Card with Emerald Accent */
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {
+        background: #ffffff !important;
+        border: 1px solid #e2e8f0 !important;
+        border-left: 5px solid #059669 !important;
+        border-radius: 14px !important;
+        padding: 1.3rem 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05) !important;
+    }
+
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) [data-testid="stChatMessageContent"] {
+        color: #0f172a !important;
+    }
+
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) p {
+        color: #1e293b !important;
+        line-height: 1.65 !important;
+        font-size: 0.95rem !important;
+    }
+
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) h1,
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) h2,
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) h3,
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) h4 {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+        margin-top: 0.8rem !important;
+        margin-bottom: 0.4rem !important;
+    }
+
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) ul,
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) ol {
+        color: #1e293b !important;
+        padding-left: 1.25rem !important;
+    }
+
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) li {
+        margin-bottom: 0.35rem !important;
+        line-height: 1.6 !important;
+    }
+
+    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) strong {
+        color: #0f172a !important;
+        font-weight: 700 !important;
+    }
+
+    /* Message Header Badges */
+    .chat-role-label {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.45rem;
+        font-size: 0.76rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+        padding: 0.25rem 0.65rem;
+        border-radius: 6px;
+        margin-bottom: 0.6rem;
+    }
+    .user-role-label {
+        background: #e0e7ff;
+        color: #3730a3;
+        border: 1px solid #c7d2fe;
+    }
+    .assistant-role-label {
+        background: #ecfdf5;
+        color: #065f46;
+        border: 1px solid #a7f3d0;
+    }
+    .grounded-pill {
+        background: #059669;
+        color: #ffffff;
+        font-size: 0.7rem;
+        font-weight: 600;
+        padding: 0.12rem 0.45rem;
+        border-radius: 10px;
+        margin-left: 0.35rem;
+    }
+
+    /* Welcome Hero Card */
+    .welcome-hero-card {
+        background: linear-gradient(135deg, #ffffff 0%, #f8fafc 100%);
+        border: 1px solid #e2e8f0;
+        border-left: 5px solid #4f46e5;
+        border-radius: 14px;
+        padding: 1.6rem 1.8rem;
+        margin-bottom: 1.6rem;
+        box-shadow: 0 4px 16px rgba(15, 23, 42, 0.04);
+    }
+    .starter-card {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 0.65rem 0.95rem;
+        margin-bottom: 0.5rem;
+        font-size: 0.88rem;
+        color: #334155;
+        transition: all 0.15s ease;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.02);
+    }
+    .starter-card:hover {
+        border-color: #a5b4fc;
+        background-color: #f0f4ff;
+        transform: translateX(4px);
     }
 
     /* Source Citation Cards */
     .source-card {
-        background: #1e293b;
-        border-left: 3px solid #6366f1;
-        border-radius: 8px;
-        padding: 0.8rem 1rem;
-        margin-bottom: 0.6rem;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-left: 4px solid #4f46e5;
+        border-radius: 10px;
+        padding: 0.9rem 1.15rem;
+        margin-bottom: 0.75rem;
         font-size: 0.88rem;
+        box-shadow: 0 2px 6px rgba(15, 23, 42, 0.03);
+        transition: transform 0.15s ease, box-shadow 0.15s ease;
+    }
+    .source-card:hover {
+        transform: translateY(-1px);
+        box-shadow: 0 4px 12px rgba(15, 23, 42, 0.07);
     }
     .source-title {
-        font-weight: 600;
-        color: #e2e8f0;
+        font-weight: 700;
+        color: #0f172a;
+        font-size: 0.92rem;
     }
     .source-guest {
-        color: #a5b4fc;
-        font-size: 0.82rem;
+        color: #4338ca;
+        font-size: 0.83rem;
+        font-weight: 600;
         margin-bottom: 0.4rem;
     }
     .source-snippet {
-        color: #cbd5e1;
-        font-size: 0.83rem;
-        line-height: 1.4;
+        color: #334155;
+        font-size: 0.84rem;
+        line-height: 1.5;
         font-style: italic;
+        background: #f8fafc;
+        padding: 0.55rem 0.85rem;
+        border-radius: 6px;
+        border: 1px dashed #cbd5e1;
+        margin-top: 0.35rem;
     }
     .source-link {
-        color: #38bdf8;
+        color: #2563eb;
         text-decoration: none;
-        font-size: 0.8rem;
+        font-weight: 600;
+        font-size: 0.82rem;
         display: inline-block;
-        margin-top: 0.3rem;
+        margin-top: 0.35rem;
+    }
+    .source-link:hover {
+        text-decoration: underline;
+        color: #1d4ed8;
+    }
+
+    /* Tabs Styling */
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 0.5rem;
+        border-bottom: 2px solid #e2e8f0;
+        margin-bottom: 1.2rem;
+    }
+    .stTabs [data-baseweb="tab"] {
+        font-weight: 600;
+        font-size: 0.95rem;
+        color: #64748b;
+        padding: 0.6rem 1.1rem;
+        border-radius: 8px 8px 0 0;
+    }
+    .stTabs [aria-selected="true"] {
+        color: #4f46e5 !important;
+        border-bottom: 2px solid #4f46e5 !important;
+        background-color: transparent !important;
+    }
+
+    /* Expander Styling */
+    [data-testid="stExpander"] {
+        border: 1px solid #e2e8f0 !important;
+        border-radius: 10px !important;
+        background: #ffffff !important;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.03) !important;
+        margin-bottom: 0.8rem !important;
     }
 
     /* Sandbox Notice Box */
     .sandbox-notice {
-        background: rgba(14, 165, 233, 0.1);
-        border: 1px solid rgba(14, 165, 233, 0.3);
+        background: #eff6ff;
+        border: 1px solid #bfdbfe;
+        border-left: 4px solid #3b82f6;
         border-radius: 8px;
-        padding: 0.75rem 1rem;
-        color: #38bdf8;
-        font-size: 0.85rem;
+        padding: 0.85rem 1.1rem;
+        color: #1e40af;
+        font-size: 0.86rem;
+        line-height: 1.5;
         margin-bottom: 1rem;
     }
 </style>
@@ -195,7 +391,7 @@ def send_chat_message(session_id, message, provider=None, model=None):
         payload["provider"] = provider
     if model:
         payload["model"] = model
-    resp = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=90.0)
+    resp = requests.post(f"{BACKEND_URL}/chat", json=payload, timeout=180.0)
     if resp.status_code == 200:
         return resp.json()
     else:
@@ -420,16 +616,22 @@ with tab_chat:
     if not messages:
         # Welcome Hero Banner
         st.markdown("""
-        ### Welcome to your Lenny Growth Assistant!
-        Ask any tactical question about product management, growth, and company building. All answers are **strictly grounded** in the real transcripts of Lenny Rachitsky's conversations with top builders.
-
-        **Try asking:**
-        - *"How did Superhuman systematically find product-market fit?"*
-        - *"What is the difference between an acquisition loop and a traditional sales funnel according to Elena Verna?"*
-        - *"What is Shreyas Doshi's LNO framework for time management?"*
-        - *"How does Brian Chesky define Founder Mode at Airbnb?"*
-        - *"What are the 4 primary compounding growth loops according to Gustaf Alströmer?"*
-        """)
+        <div class="welcome-hero-card">
+            <h3 style="margin-top:0; color:#0f172a; font-weight:700;">👋 Welcome to your Lenny Growth Assistant!</h3>
+            <p style="color:#475569; font-size:0.95rem; line-height:1.6;">
+                Ask any tactical question about product management, growth loops, and company building.
+                Every response is <strong>strictly grounded</strong> in real transcripts from Lenny Rachitsky's conversations with top builders.
+            </p>
+            <div style="margin-top: 1.2rem;">
+                <div style="font-weight:700; font-size:0.8rem; color:#64748b; text-transform:uppercase; letter-spacing:0.05em; margin-bottom:0.6rem;">💡 Recommended Topics to Explore:</div>
+                <div class="starter-card">🎯 <strong>"How did Superhuman systematically find product-market fit?"</strong> — <em>Rahul Vohra</em></div>
+                <div class="starter-card">🔄 <strong>"What is the difference between an acquisition loop and a sales funnel?"</strong> — <em>Elena Verna</em></div>
+                <div class="starter-card">⏱️ <strong>"What is Shreyas Doshi's LNO framework for time management?"</strong> — <em>Shreyas Doshi</em></div>
+                <div class="starter-card">🚀 <strong>"How does Brian Chesky define Founder Mode at Airbnb?"</strong> — <em>Brian Chesky</em></div>
+                <div class="starter-card">📈 <strong>"What are the 4 primary compounding growth loops according to Gustaf Alströmer?"</strong> — <em>Gustaf Alströmer</em></div>
+            </div>
+        </div>
+        """, unsafe_allow_html=True)
 
     # Render message history
     for msg in messages:
@@ -438,6 +640,10 @@ with tab_chat:
         sources = msg.get("sources", [])
 
         with st.chat_message(role, avatar="🧑‍💻" if role == "user" else "🎙️"):
+            if role == "user":
+                st.markdown('<div class="chat-role-label user-role-label"><span>💬</span> <strong>User Query</strong></div>', unsafe_allow_html=True)
+            else:
+                st.markdown('<div class="chat-role-label assistant-role-label"><span>🎙️</span> <strong>Lenny Growth Advisor</strong> <span class="grounded-pill">✓ Grounded Response</span></div>', unsafe_allow_html=True)
             st.markdown(content)
 
             # Render Grounded Sources if available
@@ -460,11 +666,12 @@ with tab_chat:
     if user_query:
         # Optimistically render user message
         with st.chat_message("user", avatar="🧑‍💻"):
+            st.markdown('<div class="chat-role-label user-role-label"><span>💬</span> <strong>User Query</strong></div>', unsafe_allow_html=True)
             st.markdown(user_query)
 
-        # Send to backend
+        sp_msg = "Running local inference with Ollama (takes ~20-30s on CPU)..." if active_provider_key == "ollama" else "Searching Lenny transcripts & generating grounded response..."
         with st.chat_message("assistant", avatar="🎙️"):
-            with st.spinner("Searching Lenny transcripts & generating grounded response..."):
+            with st.spinner(sp_msg):
                 try:
                     resp = send_chat_message(
                         session_id=st.session_state.session_id,
@@ -472,6 +679,7 @@ with tab_chat:
                         provider=active_provider_key,
                         model=selected_model
                     )
+                    st.markdown('<div class="chat-role-label assistant-role-label"><span>🎙️</span> <strong>Lenny Growth Advisor</strong> <span class="grounded-pill">✓ Grounded Response</span></div>', unsafe_allow_html=True)
                     st.markdown(resp["assistant_message"])
 
                     # Show sources
@@ -605,7 +813,7 @@ with tab_kb:
             <div class="source-card" style="margin-bottom: 1rem;">
                 <div class="source-title">🎙️ {ep['title']}</div>
                 <div class="source-guest"><strong>{ep['guest']}</strong> • {ep['role']}</div>
-                <p style="font-size: 0.85rem; color: #cbd5e1; margin: 0.4rem 0;">{ep['topic']}</p>
+                <p style="font-size: 0.85rem; color: #475569; margin: 0.4rem 0;">{ep['topic']}</p>
                 <a class="source-link" href="{ep['url']}" target="_blank">🔗 Episode Link & Transcript</a>
             </div>
             """, unsafe_allow_html=True)

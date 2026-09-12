@@ -87,7 +87,8 @@ class GrowthAssistantAgent:
         assistant_content = llm.generate(
             prompt=formatted_user_prompt,
             system_prompt=GROUNDED_SYSTEM_PROMPT,
-            temperature=0.3  # Low temperature for strict factual adherence
+            temperature=0.3,  # Low temperature for strict factual adherence
+            max_tokens=500
         )
 
         latency_ms = round((time.time() - start_time) * 1000, 2)

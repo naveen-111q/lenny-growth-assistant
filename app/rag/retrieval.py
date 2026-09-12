@@ -1,3 +1,4 @@
+import re
 import logging
 from typing import List, Tuple
 import numpy as np
@@ -27,7 +28,7 @@ def retrieve_relevant_chunks(
     db: Session,
     query: str,
     top_k: int = 4,
-    threshold: float = 0.20
+    threshold: float = 0.23
 ) -> List[SourceCitation]:
     """
     Embeds the user query, retrieves candidate transcript chunks from the database,
@@ -38,8 +39,19 @@ def retrieve_relevant_chunks(
         logger.warning("No transcript chunks present in database to search against.")
         return []
 
-    query_embedding = embedding_service.embed_text(query)
-    query_lower = query.lower()
+    # Expand common domain acronyms for strong semantic similarity matching
+    expanded_query = query
+    acronym_map = {
+        r"\bpmf\b": "product market fit",
+        r"\bplg\b": "product led growth",
+        r"\bhxc\b": "high expectation customer",
+        r"\blno\b": "lno framework"
+    }
+    for pat, rep in acronym_map.items():
+        expanded_query = re.sub(pat, rep, expanded_query, flags=re.IGNORECASE)
+
+    query_embedding = embedding_service.embed_text(expanded_query)
+    query_lower = expanded_query.lower()
 
     scored_chunks: List[Tuple[float, TranscriptChunkModel]] = []
     for chunk in chunks:

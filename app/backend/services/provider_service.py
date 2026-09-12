@@ -143,11 +143,10 @@ class OllamaProvider(BaseLLMProvider):
             "messages": messages,
             "stream": False,
             "options": {
-                "temperature": temperature
+                "temperature": temperature,
+                "num_predict": max_tokens or 280
             }
         }
-        if max_tokens:
-            payload["options"]["num_predict"] = max_tokens
 
         try:
             logger.info(f"Dispatching generation to Ollama ({self.model}) at {self.base_url}")
