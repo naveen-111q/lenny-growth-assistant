@@ -39,14 +39,32 @@ def retrieve_relevant_chunks(
         return []
 
     query_embedding = embedding_service.embed_text(query)
+    query_lower = query.lower()
 
     scored_chunks: List[Tuple[float, TranscriptChunkModel]] = []
     for chunk in chunks:
         if not chunk.embedding:
             continue
-        score = cosine_similarity(query_embedding, chunk.embedding)
-        if score >= threshold:
-            scored_chunks.append((score, chunk))
+        sim = cosine_similarity(query_embedding, chunk.embedding)
+
+        # Keyword / metadata boost for guest names or titles present in query
+        guest_lower = (chunk.guest or "").lower()
+        title_words = [w.lower() for w in (chunk.episode_title or "").split() if len(w) > 3]
+        guest_tokens = [t.lower() for t in guest_lower.split() if len(t) > 3]
+
+        boost = 0.0
+        if guest_lower and guest_lower in query_lower:
+            boost += 0.15
+        elif any(t in query_lower for t in guest_tokens):
+            boost += 0.10
+
+        # Topic keyword boost
+        if any(w in query_lower for w in title_words):
+            boost += 0.05
+
+        final_score = sim + boost
+        if final_score >= threshold:
+            scored_chunks.append((final_score, chunk))
 
     # Sort descending by relevance score
     scored_chunks.sort(key=lambda x: x[0], reverse=True)
