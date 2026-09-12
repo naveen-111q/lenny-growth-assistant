@@ -135,8 +135,10 @@ Ollama is the mandatory local provider for offline, private inference.
 
 You can run the backend and frontend locally in two terminal tabs:
 
-### 1. Install Dependencies
+### 1. Clone the Repository & Install Dependencies
 ```bash
+git clone https://github.com/naveen-111q/lenny-growth-assistant.git
+cd lenny-growth-assistant
 pip install -r requirements.txt
 ```
 
@@ -166,6 +168,8 @@ Open your browser at **[http://localhost:8501](http://localhost:8501)**.
 For a complete reproducible environment with PostgreSQL + pgvector:
 
 ```bash
+git clone https://github.com/naveen-111q/lenny-growth-assistant.git
+cd lenny-growth-assistant
 docker compose up --build
 ```
 
