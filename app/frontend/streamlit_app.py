@@ -720,43 +720,68 @@ with tab_chat:
     # Chat Input
     user_query = st.chat_input("Ask a product management or growth question...")
     if user_query:
+        # Guard: ensure session_id exists
+        if not st.session_state.get("session_id"):
+            st.error("⚠️ No active session. Please click '➕ New Chat' in the sidebar first.")
+            st.stop()
+
         # Optimistically render user message
-        with st.chat_message("user", avatar="🧑‍💻"):
+        with st.chat_message("user", avatar="🧑\u200d💻"):
             st.markdown('<div class="chat-role-label user-role-label"><span>💬</span> <strong>User Query</strong></div>', unsafe_allow_html=True)
             st.markdown(user_query)
 
-        sp_msg = "Running local inference with Ollama (takes ~20-30s on CPU)..." if active_provider_key == "ollama" else "Searching Lenny transcripts & generating grounded response..."
+        is_ollama = active_provider_key == "ollama"
         with st.chat_message("assistant", avatar="🎙️"):
             st.markdown('<div class="chat-role-label assistant-role-label"><span>🎙️</span> <strong>Lenny Growth Advisor</strong> <span class="grounded-pill">✓ Grounded Response</span></div>', unsafe_allow_html=True)
-            with st.spinner(sp_msg):
-                try:
-                    resp = send_chat_message(
-                        session_id=st.session_state.session_id,
-                        message=user_query,
-                        provider=active_provider_key,
-                        model=selected_model
-                    )
-                    st.markdown(resp["assistant_message"])
 
-                    # Show sources
-                    if resp.get("sources"):
-                        with st.expander(f"📚 Grounded Sources ({len(resp['sources'])} cited)"):
-                            for s in resp["sources"]:
-                                role_str = f" • *{s.get('guest_role')}*" if s.get('guest_role') else ""
-                                url_str = f'<br><a class="source-link" href="{s.get("url")}" target="_blank">🔗 Open Original Episode</a>' if s.get("url") else ""
-                                st.markdown(f"""
-                                <div class="source-card">
-                                    <div class="source-title">🎙️ {s.get('episode_title')}</div>
-                                    <div class="source-guest">Guest: <strong>{s.get('guest')}</strong>{role_str} (Relevance: {s.get('relevance_score', 0):.2f})</div>
-                                    <div class="source-snippet">"{s.get('content_snippet', '')[:300]}..."</div>
-                                    {url_str}
-                                </div>
-                                """, unsafe_allow_html=True)
+            # Progress placeholders
+            progress_ph = st.empty()
+            if is_ollama:
+                progress_ph.info("🔍 Searching transcript knowledge base...")
+            else:
+                progress_ph.info("🔍 Retrieving grounded sources...")
 
-                    st.caption(f"⚡ Response time: {resp.get('latency_ms', 0)}ms | Provider: {resp.get('provider')} ({resp.get('model')})")
-                    st.rerun()
-                except Exception as e:
-                    st.error(f"Error: {e}")
+            try:
+                resp = send_chat_message(
+                    session_id=st.session_state.session_id,
+                    message=user_query,
+                    provider=active_provider_key,
+                    model=selected_model
+                )
+                # Clear the progress indicator
+                progress_ph.empty()
+
+                st.markdown(resp["assistant_message"])
+
+                # Show sources
+                if resp.get("sources"):
+                    with st.expander(f"📚 Grounded Sources ({len(resp['sources'])} cited)"):
+                        for s in resp["sources"]:
+                            role_str = f" • *{s.get('guest_role')}*" if s.get('guest_role') else ""
+                            url_str = f'<br><a class="source-link" href="{s.get("url")}" target="_blank">🔗 Open Original Episode</a>' if s.get("url") else ""
+                            st.markdown(f"""
+                            <div class="source-card">
+                                <div class="source-title">🎙️ {s.get('episode_title')}</div>
+                                <div class="source-guest">Guest: <strong>{s.get('guest')}</strong>{role_str} (Relevance: {s.get('relevance_score', 0):.2f})</div>
+                                <div class="source-snippet">"{s.get('content_snippet', '')[:300]}..."</div>
+                                {url_str}
+                            </div>
+                            """, unsafe_allow_html=True)
+
+                latency = resp.get('latency_ms', 0)
+                provider_label = f"{resp.get('provider', '').upper()} ({resp.get('model', '')})"
+                st.caption(f"⚡ {latency}ms | {provider_label}")
+                # Rerun to refresh message history from DB
+                st.rerun()
+            except Exception as e:
+                progress_ph.empty()
+                err_str = str(e)
+                if "timed out" in err_str.lower() or "timeout" in err_str.lower():
+                    st.warning("⏱️ Ollama took too long to respond (>120s). Try a shorter question or switch to OpenRouter in the sidebar.")
+                elif "not reachable" in err_str.lower() or "connect" in err_str.lower():
+                    st.error("🔴 Ollama is not running. Open a terminal and run: `ollama serve`")
+                else:
+                    st.error(f"❌ Error: {err_str}")
 
 
 # ------------------------------------------------------------------------------
