@@ -141,3 +141,120 @@ class BaseLLMProvider(ABC):
 - **Database Availability**: If PostgreSQL is offline on host startup, the engine catches the exception and immediately switches to SQLite (`sqlite:///./data/lenny_assistant.db`), logging a warning. The application starts without interruption.
 - **Empty Retrieval**: When queries cannot be answered by Lenny's transcripts, the system returns a polite, pre-formatted limitation response rather than fabricating plausible-sounding falsehoods.
 - **Provider Outage**: The Streamlit UI queries `/health` on load and displays an informative banner with step-by-step resolution commands (`ollama run llama3.2`).
+
+---
+
+### 7. Deployment Topology
+
+#### Local Development (No Docker)
+```
+[Developer Machine]
+├── Ollama Daemon          → localhost:11434  (local model inference)
+├── FastAPI (Uvicorn)      → localhost:8000   (Python process)
+├── Streamlit              → localhost:8501   (Python process)
+└── SQLite DB              → data/lenny_assistant.db  (file on disk)
+```
+
+Startup sequence:
+```bash
+ollama run llama3.2          # Start Ollama daemon
+uvicorn app.backend.main:app --port 8000  # Start API
+streamlit run app/frontend/streamlit_app.py  # Start UI
+```
+
+#### Docker Compose (Evaluator Default)
+```
+[Docker Host Machine]
+│
+├── Container: lenny_postgres  (pgvector/pgvector:pg16)
+│   └── Port 5432:5432
+│   └── Volume: postgres_data (persistent)
+│
+├── Container: lenny_backend   (Python 3.11 / Uvicorn)
+│   └── Port 8000:8000
+│   └── DATABASE_URL=postgresql://postgres@postgres:5432/lenny_growth
+│   └── OLLAMA_BASE_URL=http://host.docker.internal:11434
+│   └── Volume: ./data:/app/data  (transcript JSONs)
+│
+├── Container: lenny_frontend  (Streamlit)
+│   └── Port 8501:8501
+│   └── BACKEND_API_URL=http://backend:8000
+│
+└── [Host Machine]
+    └── Ollama Daemon → host.docker.internal:11434  (accessed from containers)
+```
+
+One-command start:
+```bash
+docker compose up --build
+```
+
+Application access: `http://localhost:8501`
+
+#### Cloud Deployment (Optional — Future State)
+For cloud deployment, the architecture maps cleanly to:
+- **PostgreSQL** → Supabase or Railway managed Postgres (swap `DATABASE_URL` in `.env`)
+- **Backend** → Railway or Fly.io container (single Dockerfile, port 8000)
+- **Frontend** → Streamlit Community Cloud or same container host
+- **LLM** → OpenRouter cloud provider (set `LLM_PROVIDER=openrouter` in `.env`)
+
+No code changes are required — the provider and DB abstraction layers handle the switch entirely through environment variables.
+
+---
+
+### 8. Manual UI Test Plan
+
+This test plan supplements the automated pytest suite for evaluator-level acceptance testing.
+
+#### TC-01: System Health Check
+1. Open `http://localhost:8501` in a browser
+2. ✅ Sidebar shows database status badge (green = connected)
+3. ✅ Sidebar shows provider status (green = Ollama/OpenRouter online)
+4. ✅ Sidebar displays chunk count (should be > 0 after ingestion)
+
+#### TC-02: Grounded Q&A
+1. Type: *"How did Superhuman measure product-market fit?"*
+2. ✅ Response mentions Rahul Vohra and the 40% benchmark
+3. ✅ "📚 Grounded Sources" accordion appears and expands
+4. ✅ At least 1 source card shows episode title, guest name, and relevance score
+
+#### TC-03: Hallucination Prevention
+1. Type: *"Tell me about the latest iPhone release"*
+2. ✅ Response says "Based on the available Lenny Podcast transcripts, there is not enough information..."
+3. ✅ No grounded sources accordion shown
+
+#### TC-04: Session Isolation
+1. Create Session A, ask a question
+2. Click ➕ New Chat (creates Session B)
+3. ✅ Session B starts with blank history — no Session A messages visible
+4. Switch back to Session A in the dropdown
+5. ✅ Session A messages are restored correctly
+
+#### TC-05: Ship 30 Essay Generation
+1. Sidebar → ✍️ Generate Ship 30 Essay
+2. Type topic: *"Brian Chesky's Founder Mode philosophy"*
+3. Click Generate
+4. ✅ Essay appears in chat (~1,250 words)
+5. ✅ Essay contains a strong hook, headings, bullet points
+
+#### TC-06: Artifact Generation & Viewer
+1. Sidebar → 📦 Generate Artifact → Select HTML/CSS
+2. Prompt: *"Create a PMF survey results dashboard with a 40% threshold gauge"*
+3. Click Build Artifact
+4. ✅ Green success banner appears: "✅ HTML artifact ready!"
+5. Click 🎨 Artifact Viewer tab
+6. ✅ Rendered HTML shows inside the viewer (not blank)
+7. Switch to Code Inspector mode
+8. ✅ Raw HTML source is displayed with syntax highlighting
+
+#### TC-07: Ollama Offline Resilience
+1. Stop Ollama (`ollama stop` or close the process)
+2. Refresh the app
+3. ✅ Sidebar shows red "OLLAMA UNAVAILABLE" badge with fix instructions
+4. ✅ App does not crash — UI remains functional
+
+#### TC-08: Provider Switching
+1. Sidebar → switch from Ollama to OpenRouter
+2. Ask a question
+3. ✅ Response generated (requires valid OPENROUTER_API_KEY)
+4. ✅ Active model badge in sidebar updates to show OpenRouter model name
