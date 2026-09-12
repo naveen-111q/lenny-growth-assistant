@@ -103,76 +103,125 @@ st.markdown("""
     }
 
     /* =========================================================================
-       USER QUERY VS ASSISTANT RESPONSE DISTINCT THEMES
+       USER QUERY VS ASSISTANT RESPONSE DISTINCT THEMES (FULL BACKGROUND FILL)
        ========================================================================= */
 
-    /* 1. User Message: Soft Indigo / Blue Bubble */
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) {
-        background: linear-gradient(135deg, #f0f4ff 0%, #e0e7ff 100%) !important;
-        border: 1px solid #c7d2fe !important;
-        border-left: 5px solid #4f46e5 !important;
-        border-radius: 14px !important;
-        padding: 1.1rem 1.35rem !important;
-        margin-bottom: 1.25rem !important;
-        box-shadow: 0 2px 10px rgba(79, 70, 229, 0.07) !important;
+    /* 1. User Message: Distinct Soft Indigo / Lavender Bubble till the end of text */
+    div[data-testid="stChatMessage"]:has(.user-role-label) {
+        background: linear-gradient(135deg, #eef2ff 0%, #e0e7ff 100%) !important;
+        border: 1.5px solid #c7d2fe !important;
+        border-left: 6px solid #4f46e5 !important;
+        border-radius: 16px !important;
+        padding: 1.25rem 1.5rem !important;
+        margin-bottom: 1.5rem !important;
+        box-shadow: 0 4px 14px rgba(79, 70, 229, 0.08) !important;
+        width: 100% !important;
     }
 
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) [data-testid="stChatMessageContent"] {
+    div[data-testid="stChatMessage"]:has(.user-role-label) [data-testid="stChatMessageContent"] {
+        background: transparent !important;
         color: #1e1b4b !important;
     }
 
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarUser"]) p {
+    div[data-testid="stChatMessage"]:has(.user-role-label) p,
+    div[data-testid="stChatMessage"]:has(.user-role-label) span,
+    div[data-testid="stChatMessage"]:has(.user-role-label) strong {
         color: #1e1b4b !important;
         font-weight: 500 !important;
-        font-size: 0.96rem !important;
-        line-height: 1.55 !important;
-    }
-
-    /* 2. Assistant Message: Crisp White Card with Emerald Accent */
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) {
-        background: #ffffff !important;
-        border: 1px solid #e2e8f0 !important;
-        border-left: 5px solid #059669 !important;
-        border-radius: 14px !important;
-        padding: 1.3rem 1.5rem !important;
-        margin-bottom: 1.5rem !important;
-        box-shadow: 0 4px 18px rgba(15, 23, 42, 0.05) !important;
-    }
-
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) [data-testid="stChatMessageContent"] {
-        color: #0f172a !important;
-    }
-
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) p {
-        color: #1e293b !important;
-        line-height: 1.65 !important;
-        font-size: 0.95rem !important;
-    }
-
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) h1,
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) h2,
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) h3,
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) h4 {
-        color: #0f172a !important;
-        font-weight: 700 !important;
-        margin-top: 0.8rem !important;
-        margin-bottom: 0.4rem !important;
-    }
-
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) ul,
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) ol {
-        color: #1e293b !important;
-        padding-left: 1.25rem !important;
-    }
-
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) li {
-        margin-bottom: 0.35rem !important;
+        font-size: 1rem !important;
         line-height: 1.6 !important;
     }
 
-    div[data-testid="stChatMessage"]:has([data-testid="stChatMessageAvatarAssistant"]) strong {
+    div[data-testid="stChatMessage"]:has(.user-role-label) [data-testid="stChatMessageAvatar"] {
+        background: #c7d2fe !important;
+        border: 1px solid #a5b4fc !important;
+        border-radius: 12px !important;
+    }
+
+    /* 2. Assistant Message: Distinct Soft Emerald / Mint Card till the end of text */
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) {
+        background: linear-gradient(135deg, #f0fdf4 0%, #ecfdf5 100%) !important;
+        border: 1.5px solid #a7f3d0 !important;
+        border-left: 6px solid #059669 !important;
+        border-radius: 16px !important;
+        padding: 1.35rem 1.6rem !important;
+        margin-bottom: 2rem !important;
+        box-shadow: 0 6px 20px rgba(5, 150, 105, 0.06) !important;
+        width: 100% !important;
+    }
+
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) [data-testid="stChatMessageContent"] {
+        background: transparent !important;
         color: #0f172a !important;
+    }
+
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) p {
+        color: #1e293b !important;
+        line-height: 1.7 !important;
+        font-size: 0.96rem !important;
+    }
+
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) h1,
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) h2,
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) h3,
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) h4 {
+        color: #064e3b !important;
         font-weight: 700 !important;
+        margin-top: 0.9rem !important;
+        margin-bottom: 0.45rem !important;
+    }
+
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) ul,
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) ol {
+        color: #1e293b !important;
+        padding-left: 1.3rem !important;
+    }
+
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) li {
+        margin-bottom: 0.4rem !important;
+        line-height: 1.65 !important;
+    }
+
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) strong {
+        color: #064e3b !important;
+        font-weight: 700 !important;
+    }
+
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) [data-testid="stChatMessageAvatar"] {
+        background: #bbf7d0 !important;
+        border: 1px solid #86efac !important;
+        border-radius: 12px !important;
+    }
+
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) code {
+        background-color: #dcfce7 !important;
+        color: #064e3b !important;
+        padding: 0.18rem 0.45rem !important;
+        border-radius: 4px !important;
+        font-size: 0.88rem !important;
+        border: 1px solid #bbf7d0 !important;
+    }
+
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) pre {
+        background-color: #ffffff !important;
+        border: 1px solid #a7f3d0 !important;
+        border-radius: 8px !important;
+        padding: 0.85rem !important;
+    }
+
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) blockquote {
+        background: #ffffff !important;
+        border-left: 4px solid #059669 !important;
+        padding: 0.6rem 1rem !important;
+        border-radius: 4px !important;
+        color: #1e293b !important;
+    }
+
+    div[data-testid="stChatMessage"]:has(.assistant-role-label) [data-testid="stExpander"] {
+        background: #ffffff !important;
+        border: 1px solid #a7f3d0 !important;
+        border-radius: 10px !important;
+        margin-top: 1rem !important;
     }
 
     /* Message Header Badges */
@@ -671,6 +720,7 @@ with tab_chat:
 
         sp_msg = "Running local inference with Ollama (takes ~20-30s on CPU)..." if active_provider_key == "ollama" else "Searching Lenny transcripts & generating grounded response..."
         with st.chat_message("assistant", avatar="🎙️"):
+            st.markdown('<div class="chat-role-label assistant-role-label"><span>🎙️</span> <strong>Lenny Growth Advisor</strong> <span class="grounded-pill">✓ Grounded Response</span></div>', unsafe_allow_html=True)
             with st.spinner(sp_msg):
                 try:
                     resp = send_chat_message(
@@ -679,7 +729,6 @@ with tab_chat:
                         provider=active_provider_key,
                         model=selected_model
                     )
-                    st.markdown('<div class="chat-role-label assistant-role-label"><span>🎙️</span> <strong>Lenny Growth Advisor</strong> <span class="grounded-pill">✓ Grounded Response</span></div>', unsafe_allow_html=True)
                     st.markdown(resp["assistant_message"])
 
                     # Show sources
