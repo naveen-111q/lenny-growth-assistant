@@ -24,7 +24,7 @@ class Settings(BaseSettings):
     # RAG & Embedding Settings
     embedding_model: str = "all-MiniLM-L6-v2"
     rag_top_k: int = 4
-    rag_score_threshold: float = 0.35
+    rag_score_threshold: float = 0.20
 
     # Server & Port Settings
     backend_host: str = "0.0.0.0"
