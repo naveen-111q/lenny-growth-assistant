@@ -41,7 +41,7 @@ class GrowthAssistantAgent:
 
         is_ollama = (chosen_provider == "ollama")
         rag_k = 2 if is_ollama else settings.rag_top_k
-        max_gen_tokens = 220 if is_ollama else 500
+        max_gen_tokens = 150 if is_ollama else 500
 
         # 3. Retrieve relevant transcript chunks
         sources: List[SourceCitation] = retrieve_relevant_chunks(
@@ -72,7 +72,7 @@ class GrowthAssistantAgent:
             )
 
         # 5. Format grounded context and conversation history
-        context_str = construct_grounded_context(sources)
+        context_str = construct_grounded_context(sources, max_chars=400 if is_ollama else 0)
 
         # Fetch recent session history for conversational continuity
         session_detail = SessionService.get_session(db, request.session_id)

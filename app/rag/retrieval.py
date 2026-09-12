@@ -100,9 +100,10 @@ def retrieve_relevant_chunks(
     return citations
 
 
-def construct_grounded_context(sources: List[SourceCitation]) -> str:
+def construct_grounded_context(sources: List[SourceCitation], max_chars: int = 0) -> str:
     """
     Formats retrieved sources into a clean markdown block for LLM prompt injection.
+    Optionally trims snippets to max_chars for lightweight prompt processing.
     """
     if not sources:
         return "No relevant transcript passages found."
@@ -111,11 +112,14 @@ def construct_grounded_context(sources: List[SourceCitation]) -> str:
     for idx, source in enumerate(sources, 1):
         role_text = f" ({source.guest_role})" if source.guest_role else ""
         url_text = f"\nSource URL: {source.url}" if source.url else ""
+        snippet = source.content_snippet
+        if max_chars and len(snippet) > max_chars:
+            snippet = snippet[:max_chars].rsplit(" ", 1)[0] + "..."
         part = (
             f"--- TRANSCRIPT EXCERPT {idx} ---\n"
             f"Episode: {source.episode_title}\n"
             f"Guest: {source.guest}{role_text}{url_text}\n"
-            f"Content:\n{source.content_snippet}\n"
+            f"Content:\n{snippet}\n"
         )
         context_parts.append(part)
 

@@ -144,8 +144,9 @@ class OllamaProvider(BaseLLMProvider):
             "stream": False,
             "options": {
                 "temperature": temperature,
-                "num_predict": min(max_tokens or 220, 220),
-                "num_ctx": 2048
+                "num_predict": min(max_tokens or 150, 150),
+                "num_ctx": 1024,
+                "num_thread": 6
             }
         }
 
