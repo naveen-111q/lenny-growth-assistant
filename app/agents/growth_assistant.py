@@ -92,8 +92,22 @@ class GrowthAssistantAgent:
 
         latency_ms = round((time.time() - start_time) * 1000, 2)
 
-        # 7. Persist messages and citations
-        source_dicts = [s.model_dump() for s in sources]
+        # 7. Check if model determined lack of information / refusal
+        refusal_markers = [
+            "not enough information",
+            "no mention of",
+            "is not mentioned",
+            "does not mention",
+            "not found in the provided",
+            "transcripts do not contain",
+            "transcripts do not provide",
+            "there is no mention"
+        ]
+        is_refusal = any(marker in assistant_content.lower() for marker in refusal_markers)
+        active_sources = [] if is_refusal else sources
+
+        # 8. Persist messages and citations
+        source_dicts = [s.model_dump() for s in active_sources]
         SessionService.add_message(db, request.session_id, "user", request.message)
         SessionService.add_message(db, request.session_id, "assistant", assistant_content, sources=source_dicts)
 
@@ -101,7 +115,7 @@ class GrowthAssistantAgent:
             session_id=request.session_id,
             user_message=request.message,
             assistant_message=assistant_content,
-            sources=sources,
+            sources=active_sources,
             provider=chosen_provider,
             model=llm.model,
             latency_ms=latency_ms
