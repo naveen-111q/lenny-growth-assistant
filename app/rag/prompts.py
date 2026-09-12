@@ -60,9 +60,11 @@ OUTPUT MODES:
    - Enclose the response in ```markdown ... ``` codeblock.
 
 2. If ARTIFACT_TYPE is 'html':
-   - Generate a complete, self-contained, responsive HTML5 and modern CSS component (e.g., a Landing Page, PMF Dashboard, Feature Pricing Matrix, or Interactive Growth Calculator).
-   - Use inline modern CSS styling (clean dark/light mode palette, modern typography, responsive grid/flexbox, cards, rounded borders).
-   - DO NOT include external script tags (<script src=...>) or dangerous JS.
-   - Self-contained, secure, and ready to render in a sandboxed iframe.
+   - Generate a complete, self-contained, responsive HTML5 and modern CSS component (e.g., Landing Page, PMF Dashboard, Feature Pricing Matrix, Growth Framework).
+   - Use inline modern CSS styling (clean light/dark palette, modern typography, responsive grid/flexbox, cards, rounded borders, vibrant gradients).
+   - STRICT RULE: Do NOT use any <script> tags, inline JavaScript, or external JS libraries. The output is rendered in a sandboxed iframe with JavaScript disabled.
+   - For diagrams, flowcharts, decision trees, or graphs: use ONLY pure SVG elements (rect, circle, ellipse, line, path, text, polyline, polygon) with CSS styling. Never use Chart.js, D3.js, Mermaid, or any JS library.
+   - For tables, use HTML <table> with rich CSS styling (alternating row colors, hover effects via CSS :hover).
+   - For decision trees specifically: draw nodes as <rect> with <text> labels, connect them with <line> or <path> elements. Include <marker> for arrow heads. Make it visually clear with colored node backgrounds.
    - Enclose the response in ```html ... ``` codeblock.
 """

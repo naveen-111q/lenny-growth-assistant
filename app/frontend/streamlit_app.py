@@ -618,7 +618,7 @@ with st.sidebar:
             if not art_prompt.strip():
                 st.warning("Please specify requirements.")
             else:
-                with st.spinner(f"Generating {art_type} artifact..."):
+                with st.spinner(f"Generating {art_type} artifact... (may take ~60s for Ollama)"):
                     try:
                         res = trigger_artifact(
                             session_id=st.session_state.session_id,
@@ -635,10 +635,11 @@ with st.sidebar:
                         }
                         st.session_state.current_artifact = art_obj
                         st.session_state[f"artifact_{st.session_state.session_id}"] = art_obj
-                        st.success(f"Generated {res['artifact_type'].upper()} artifact!")
-                        st.rerun()
+                        # Mark that a new artifact is ready so the viewer tab highlights it
+                        st.session_state["artifact_just_generated"] = True
+                        st.success(f"✅ {res['artifact_type'].upper()} artifact ready! → Click the **🎨 Artifact Viewer** tab above to view it.")
                     except Exception as e:
-                        st.error(f"Failed: {e}")
+                        st.error(f"❌ Failed to generate artifact: {e}")
 
 
 # ==============================================================================

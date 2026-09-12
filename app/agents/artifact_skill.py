@@ -68,10 +68,24 @@ class ArtifactSkill:
         if artifact_type not in ("markdown", "html"):
             artifact_type = "markdown"
 
+        # Detect if this is a graph/diagram/tree request → reinforce SVG requirement
+        is_visual_prompt = any(kw in request.prompt.lower() for kw in [
+            "graph", "chart", "diagram", "tree", "flowchart", "decision", "flow",
+            "plot", "visualize", "visualization", "network", "map", "timeline"
+        ])
+        svg_note = ""
+        if is_visual_prompt and artifact_type == "html":
+            svg_note = (
+                "\n\nIMPORTANT: This is a visual/diagram request. You MUST use pure SVG (rect, circle, line, path, text "
+                "with markers for arrows). Do NOT use any JavaScript, D3.js, Chart.js, or Mermaid. "
+                "Render the entire diagram as inline SVG within the HTML document. "
+                "Use colored rect nodes, connecting lines with arrowhead markers, and clear text labels."
+            )
+
         prompt = f"""
 REQUESTED ARTIFACT TYPE: {artifact_type.upper()}
 USER INSTRUCTION:
-{request.prompt}
+{request.prompt}{svg_note}
 
 GROUNDED PODCAST TRANSCRIPTS:
 {grounded_context}
@@ -82,7 +96,7 @@ CONVERSATION CONTEXT:
 REQUIREMENTS:
 - Output ONLY the artifact content enclosed in ```{artifact_type} ... ```.
 - If markdown, create an exhaustive, production-grade product document with structured sections, tables, and metrics.
-- If html, create a complete self-contained HTML5/CSS document with embedded responsive CSS, modern cards, vibrant gradients, and clean typography. Do NOT include <script> tags.
+- If html, create a complete self-contained HTML5/CSS document with embedded responsive CSS, modern cards, vibrant gradients, and clean typography. Do NOT include <script> tags or any JavaScript.
 """
 
         raw_output = llm.generate(
