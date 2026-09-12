@@ -48,3 +48,6 @@ embeddings_cache/
 *.swo
 .DS_Store
 Thumbs.db
+scratch_artifact.html
+scratch/
+
